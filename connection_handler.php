@@ -169,6 +169,43 @@ case 'version':
 	send($me, ':' . $config['name'] . ' 005 ' . $me['nick'] . ' INVEX :are supported by this server');
 	break;
 
+case 'invite':
+	$who = $args[1];
+	$target = $args[2];
+
+	if(isset($channels[strtolower($target)]))
+	{ // Does the channel even exist?
+		$channel = $channels[strtolower($target)];
+		if(!in_array($me, $channel['nicks']))
+		{ // Is user even in the channel?
+			send($me, ':' . $config['name'] . ' 442 ' . $me['nick'] . ' ' . $target . ' :You\'re not on that channel');
+			break;
+		}
+		$found = false; // Make sure we find the target
+		foreach($conn as $him)
+		{ // Find target
+			if(strtolower($him['nick']) == strtolower($who)) $found = $him;
+		}
+		if($found === false)
+		{ // User offline
+			send($me, ':' . $config['name'] . ' 401 ' . $me['nick'] . ' ' . $who . ' :No such nick');
+			break;
+		}
+		if(in_array($found, $channel['nicks']))
+		{ // Is target already in the channel?
+			send($me, ':' . $config['name'] . ' 443 ' . $me['nick'] . ' ' . $who . ' ' . $target . ' :is already on channel');
+			break;
+		}
+		// Invite to channel
+		send($found, ':' . $me['nick'] . '!' . $me['ident'] . '@' . $me['cloak'] . ' INVITE ' . $who . ' ' . $target);
+	}
+	else
+	{ // Channel does not exist!
+		send($me, ':' . $config['name'] . ' 403 ' . $me['nick'] . ' ' . $target . ' :No such nick/channel');
+		break;
+	}
+	break;
+
 case 'privmsg':
 	$target = $args[1];
 	$message = substr($c, strpos($c, ' :') + 2);
@@ -251,7 +288,7 @@ case 'join':
 		}
 
 		if(isset($channels[strtolower($target)]))
-		{ // Does the cahnnel exist yet?
+		{ // Does the channel exist yet?
 			$channel = $channels[strtolower($target)];
 			if(in_array($me, $channel['nicks']))
 				break; // Is user already in the channel?
