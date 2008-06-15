@@ -5,13 +5,7 @@
 // originally written and copyright 2008 Nick Markwell (RockerMONO/duck)
 // feel free to edit and distribute as long as you leave all original credit for this
 
-// Array to store configoration values, read over before you run the server
-$config=Array();
-$config['name']='homebrew.danopia.no-ip.org'; // Server name
-$config['max_len']=512; // Max packet length
-$config['max_users']=25; // Max amount of sockets that will be accepted at one time
-$config['port']=6661; // TCP/IP port to listen on for clients
-$config['line_ending']="\n"; // Packet line ending
+include('config.php'); // Open config file, read it over before you run the server!
 
 $conn = array(); // Array of connections/clients
 $channels = array(); // Info on eahc channel
