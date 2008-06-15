@@ -79,7 +79,7 @@ case 'nick':
 
 	if ($taken)
 	{ // it IS in use, after all.
-		send($me, ':' . $config['name'] . ' 433 ' . $newnick . ' :Nickname is already in use.');
+		send($me, ':' . $config['name'] . ' 433 ' . (($me['nick'] == null) ? '*' : $me['nick']) . ' ' . $newnick . ' :Nickname is already in use.');
 		break;
 	}
 
@@ -132,12 +132,12 @@ case 'user':
 	{ // You can only register once.
 		$me['ident'] = $newident;
 		$me['realname'] = $newrealname;
-		send($me, ':' . $config['name'] . ' 001 ' . $me['nick'] . ' :Welcome to the DevNet IRC Network ' . $me['nick'] . '!' . $me['ident'] . '@' . $me['host']);
+		send($me, ':' . $config['name'] . ' 001 ' . $me['nick'] . ' :Welcome to the PHP-IRCd IRC Network ' . $me['nick'] . '!' . $me['ident'] . '@' . $me['host']);
 		send($me, ':' . $config['name'] . ' 002 ' . $me['nick'] . ' :Your host is ' . $config['name'] . ', running version Danoserv0.1.0');
 		send($me, ':' . $config['name'] . ' 003 ' . $me['nick'] . ' :This server was created Fri Jul 13 19:22:25 2007');
 		send($me, ':' . $config['name'] . ' 004 ' . $me['nick'] . ' ' . $config['name'] . ' Danoserv0.1.0 iowghraAsORTVSxNCWqBzvdHtGp lvhopsmntikrRcaqOALQbSeIKVfMCuzNTGj');
 		send($me, ':' . $config['name'] . ' 005 ' . $newnick . ' CMDS=KNOCK,MAP,DCCALLOW,USERIP NAMESX SAFELIST HCN MAXCHANNELS=10 CHANLIMIT=#:10 MAXLIST=b:60,e:60,I:60 NICKLEN=30 CHANNELLEN=32 TOPICLEN=307 KICKLEN=307 AWAYLEN=307 MAXTARGETS=20 :are supported by this server');
-		send($me, ':' . $config['name'] . ' 005 ' . $newnick . ' WALLCHOPS WATCH=128 SILENCE=15 MODES=12 CHANTYPES=# PREFIX=(qaohv)~&@%+ CHANMODES=beI,kfL,lj,psmntirRcOAQKVCuzNSMTG NETWORK=DevNet CASEMAPPING=ascii EXTBAN=~,cqnr ELIST=MNUCT STATUSMSG=~&@%+ EXCEPTS :are supported by this server');
+		send($me, ':' . $config['name'] . ' 005 ' . $newnick . ' WALLCHOPS WATCH=128 SILENCE=15 MODES=12 CHANTYPES=# PREFIX=(qaohv)~&@%+ CHANMODES=beI,kfL,lj,psmntirRcOAQKVCuzNSMTG NETWORK=PHP-IRCd CASEMAPPING=ascii EXTBAN=~,cqnr ELIST=MNUCT STATUSMSG=~&@%+ EXCEPTS :are supported by this server');
 		send($me, ':' . $config['name'] . ' 005 ' . $me['nick'] . ' INVEX :are supported by this server');
 		send($me, ':' . $config['name'] . ' 251 ' . $me['nick'] . ' :There are ' . sizeof($conn) . ' users and 1 invisible on 1 servers');
 		send($me, ':' . $config['name'] . ' 252 ' . $me['nick'] . ' 1 :operator(s) online');

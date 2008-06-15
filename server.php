@@ -10,7 +10,7 @@ $config=Array();
 $config['name']='homebrew.danopia.no-ip.org'; // Server name
 $config['max_len']=512; // Max packet length
 $config['max_users']=25; // Max amount of sockets that will be accepted at one time
-$config['port']=7000; // TCP/IP port to listen on for clients
+$config['port']=6661; // TCP/IP port to listen on for clients
 $config['line_ending']="\n"; // Packet line ending
 
 $conn = array(); // Array of connections/clients
@@ -107,6 +107,8 @@ socket_set_nonblock($sock);
 
 // Old code, can be used to see the server status
 //file_put_contents("status.txt", "up");
+
+echo "Running...";
 
 // Main loop
 while (true)
