@@ -38,14 +38,15 @@
 			socket_set_nonblock($x); // Nonblocking FTW
 			send(array('nick'=>'new user','sock'=>$x), ':' . $config['name'] . ' NOTICE AUTH :*** Found your hostname');
 			$conn[] = array( // Add the user
-				'nick'		=> null,
-				'sock'		=> $x,
+				'nick'	=> null,
+				'sock'	=> $x,
 				'buf'		=> '',
 				'ip'		=> $ip,
-				'ident'		=> null,
+				'ident'	=> null,
 				'realname'	=> null,
-				'host'		=> $host,
-				'cloak'		=> $host);
+				'oper'	=> false,
+				'host'	=> $host,
+				'cloak'	=> $host);
 		//}
 	}
 
@@ -145,12 +146,20 @@ case 'user':
 		send($me, ':' . $config['name'] . ' 255 ' . $me['nick'] . ' :I have ' . (sizeof($conn) + 1) . ' clients and 0 servers');
 		send($me, ':' . $config['name'] . ' 265 ' . $me['nick'] . ' :Current Local Users: ' . (sizeof($conn) + 1) . '  Max: ' . (sizeof($conn) + 1));
 		send($me, ':' . $config['name'] . ' 266 ' . $me['nick'] . ' :Current Global Users: ' . (sizeof($conn) + 1) . '  Max: ' . (sizeof($conn) + 1));
-		send($me, ':' . $config['name'] . ' 422 ' . $me['nick'] . ' :MOTD File is missing');
+		send($me, ':' . $config['name'] . ' 375 ' . $me['nick'] . ' :- ' . $config['name'] . ' Message of the Day -');
+		send($me, ':' . $config['name'] . ' 372 ' . $me['nick'] . ' :- ' . implode("\r\n:" . $config['name'] . ' 372 ' . $me['nick'] . ' :- ', explode($config['line_ending_conf'],$config['motd'])));
+		send($me, ':' . $config['name'] . ' 376 ' . $me['nick'] . ' :End of /MOTD command.');
 	}
 	else
 	{ // Initial USER was already sent.
 		send($me, ':' . $config['name'] . ' 462 :You may not reregister');
 	}
+	break;
+
+case 'motd':
+	send($me, ':' . $config['name'] . ' 375 ' . $me['nick'] . ' :- ' . $config['name'] . ' Message of the Day -');
+	send($me, ':' . $config['name'] . ' 372 ' . $me['nick'] . ' :- ' . implode("\r\n:" . $config['name'] . ' 372 ' . $me['nick'] . ' :- ', explode($config['line_ending_conf'],$config['motd'])));
+	send($me, ':' . $config['name'] . ' 376 ' . $me['nick'] . ' :End of /MOTD command.');
 	break;
 
 case 'lusers':
@@ -245,12 +254,57 @@ case 'whois':
 	}
 	break;
 
+case 'oper':
+	if(count($args) == 3)
+	{
+		$user = $args[1];
+		$pass = $args[2];
+		if((isset($config['opers'][$user])) && ($config['opers'][$user] == $pass))
+		{
+			$me['oper'] = true;
+			send($me, ':' . $config['name'] . ' 381 ' . $me['nick'] . ' :You have entered... the Twilight Zone!');
+			break;
+		}
+	}
+	send($me, ':' . $config['name'] . ' 491 ' . $me['nick'] . ' :Only few of mere mortals may try to enter the twilight zone');
+	break;
+
 case 'kill':
-	$target = $args[1];
-	foreach($conn as $him)
-	{ // Find target
-		if(strtolower($him['nick']) == strtolower($target))
-			kill($him, 'Killed');
+	if($me['oper'])
+	{ // You have to be opered!
+		if(count($args) == 3)
+		{ // We need a reason
+			$target = $args[1];
+			$reason = $args[2];
+			if (strpos($c, ' :') !== false)
+				$reason = substr($c, strpos($c, ' :') + 2);
+
+			foreach($conn as $him)
+			{ // Find target
+				if(strtolower($him['nick']) == strtolower($target))
+					kill($him, 'Killed (' . $me . ' (' . $reason . '))');
+			}
+		}
+		else
+		{
+			send($me, ':' . $config['name'] . ' 461 ' . $me['nick'] . ' KILL :Not enough parameters');
+		}
+	}
+	else
+	{
+		send($me, ':' . $config['name'] . ' 481 ' . $me['nick'] . ' :Permission Denied- You do not have the correct IRC operator privileges');
+	}
+	break;
+
+case 'rehash':
+	if($me['oper'])
+	{ // You have to be opered!
+		include('config.php');
+		send($me, ':' . $config['name'] . ' 382 ' . $me['nick'] . ' config.php :Rehashing');
+	}
+	else
+	{
+		send($me, ':' . $config['name'] . ' 481 ' . $me['nick'] . ' :Permission Denied- You do not have the correct IRC operator privileges');
 	}
 	break;
 
