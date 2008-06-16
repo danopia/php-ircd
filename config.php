@@ -94,12 +94,14 @@ $config['line_ending_conf'] = "
 //
 // You may use newlines.
 //
-$config['motd'] = "Message of the Day! w00t!
+$config['motd'] = "THIS IS THE MESSAGE OF THE DAY!
 
-It goes something like...
+Welcome to my PHP IRCd test server! PHP IRCd is registered on SourceForge.net
+<http://sf.net/projects/php-ircd>
 
-...
-Oh, whatever.";
+Please submit any bugs you find.
+
+#botters is the main channel on here!";
 
 ////////////////////////////////////\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 //             Arrays (for linking, opering, and the sort)            \\

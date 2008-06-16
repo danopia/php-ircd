@@ -38,15 +38,16 @@
 			socket_set_nonblock($x); // Nonblocking FTW
 			send(array('nick'=>'new user','sock'=>$x), ':' . $config['name'] . ' NOTICE AUTH :*** Found your hostname');
 			$conn[] = array( // Add the user
-				'nick'	=> null,
-				'sock'	=> $x,
+				'nick'		=> null,
+				'sock'		=> $x,
 				'buf'		=> '',
 				'ip'		=> $ip,
 				'ident'	=> null,
 				'realname'	=> null,
-				'oper'	=> false,
-				'host'	=> $host,
+				'host'		=> $host,
 				'cloak'	=> $host);
+			$u_info[$x] = array( // Add the info array
+				'oper'		=> false);
 		//}
 	}
 
@@ -261,7 +262,7 @@ case 'oper':
 		$pass = $args[2];
 		if((isset($config['opers'][$user])) && ($config['opers'][$user] == $pass))
 		{
-			$me['oper'] = true;
+			$u_info[$me['sock']]['oper'] = true;
 			send($me, ':' . $config['name'] . ' 381 ' . $me['nick'] . ' :You have entered... the Twilight Zone!');
 			break;
 		}
@@ -270,9 +271,9 @@ case 'oper':
 	break;
 
 case 'kill':
-	if($me['oper'])
+	if($u_info[$me['sock']])
 	{ // You have to be opered!
-		if(count($args) == 3)
+		if(count($args) >= 3)
 		{ // We need a reason
 			$target = $args[1];
 			$reason = $args[2];
@@ -282,7 +283,7 @@ case 'kill':
 			foreach($conn as $him)
 			{ // Find target
 				if(strtolower($him['nick']) == strtolower($target))
-					kill($him, 'Killed (' . $me . ' (' . $reason . '))');
+					kill($him, 'Killed (' . $me['nick'] . ' (' . $reason . '))');
 			}
 		}
 		else
@@ -297,7 +298,7 @@ case 'kill':
 	break;
 
 case 'rehash':
-	if($me['oper'])
+	if($u_info[$me['sock']])
 	{ // You have to be opered!
 		include('config.php');
 		send($me, ':' . $config['name'] . ' 382 ' . $me['nick'] . ' config.php :Rehashing');
