@@ -8,7 +8,16 @@
 include('config.php'); // Open config file, read it over before you run the server!
 
 $conn = array(); // Array of connections/clients
-$channels = array(); // Info on eahc channel
+$channels = array(); // Info on each channel
+
+/*
+ * Info on each user. Referenced by objects in $conn.
+ * Used to bugfix a problem concerning outdated user arrays in channels.
+ * Bug reported by b4, June 16, 2008 while testing /oper
+ * Bug fixed by danopia, June 16, 2008
+ */
+$u_info = array();
+          
 
 // socket_noprmal_read pasted off php.net, thanks to the
 // poster. used to correctly read to newlines on win32
@@ -65,7 +74,7 @@ function array_removal($val, &$arr)
 	return true;
 }
 
-// Removes a client with a certian nick from amn array of clients, using array_removal
+// Removes a client with a certian nick from an array of clients, using array_removal
 function nick_removal($nick, &$arr)
 {
 	foreach($arr as $id => $him)
@@ -99,7 +108,7 @@ socket_listen($sock, $config['max_users']);
 // Nonblocking socket
 socket_set_nonblock($sock);
 
-// Old code, can be used to see the server status
+// Old code, can be used to see the server status, removed as soon as danopia saw it xD
 //file_put_contents("status.txt", "up");
 
 echo "Running...";
@@ -121,7 +130,7 @@ function dns_timeout($ip) {
 // Kills a certian user, used by /kill, QUIT, netsplits, etc.
 function kill($who, $reason)
 {
-	global $channels, $conn;
+	global $channels, $conn, $u_info;
 	$sentto = array($who); // Who received a QUIT packet already?
 	foreach($channels as &$channel) // Loop through channels
 	{
@@ -131,15 +140,16 @@ function kill($who, $reason)
 			{
 				if(!in_array($user, $sentto)) // Make sure user didn't get QUIT yet
 				{
-					send($user, ':' . $who['nick'] . '!' . $who['ident'] . '@' . $who['cloak'] . ' QUIT :' . $reason);
+					send($user, ':' . $who['nick'] . '!' . $who['ident'] . '@' . $u_info[$who['sock']]['cloak'] . ' QUIT :' . $reason);
 					$sentto[] = $user;
 				}
 			}
 			nick_removal($who['nick'], $channel['nicks']); // Remove the killed user from the channel
 		}
 	}
-	send($who, 'ERROR :Closing Link: ' . $who['nick'] . '[' . $who['cloak'] . '] (' . $reason . ')');
+	send($who, 'ERROR :Closing Link: ' . $who['nick'] . '[' . $who['host'] . '] (' . $reason . ')');
 	socket_close($who['sock']); // Close socket
+	array_removal($u_info[$who['sock']], $u_info); // Remove from the info array - part of the bugfix stated above
 	array_removal($who, $conn); // Remove socket from listing
 }
 

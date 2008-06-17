@@ -44,10 +44,10 @@
 				'ip'		=> $ip,
 				'ident'	=> null,
 				'realname'	=> null,
-				'host'		=> $host,
-				'cloak'	=> $host);
+				'host'		=> $host);
 			$u_info[$x] = array( // Add the info array
-				'oper'		=> false);
+				'oper'		=> false,
+				'cloak'	=> $host);
 		//}
 	}
 
@@ -103,13 +103,20 @@ case 'nick':
 				{ // Loop through the nicks in said channel
 					if(!in_array($user, $sentto))
 					{ // User did not get the NICK yet
-						send($user, ':' . $me['nick'] . '!' . $me['ident'] . 'a@' . $me['cloak'] . ' NICK ' . $newnick);
+						send($user, ':' . $me['nick'] . '!' . $me['ident'] . '@' . $u_info[$me['sock']]['cloak'] . ' NICK ' . $newnick);
 						$sentto[] = $user;
 					}
 				}
-				// Replace the channel listing with new nick
-				nick_removal($me['nick'], $channel['nicks']);
-				$channel['nicks'][] = $newme;
+				// Replace the channel listings with new nick. We need to search all the modes arrays too.
+				$arrs = array('nicks', 'owners', 'protected', 'oped', 'halfoped', 'voiced');
+				foreach($arrs as $arr)
+				{
+					if(in_array($me, $channel[$arr]))
+					{
+						nick_removal($me['nick'], $channel[$arr]);
+						$channel[$arr][] = $newme;
+					}
+				}
 			}
 		}
 		$me['nick'] = $newnick;
@@ -207,7 +214,7 @@ case 'invite':
 			break;
 		}
 		// Invite to channel
-		send($found, ':' . $me['nick'] . '!' . $me['ident'] . '@' . $me['cloak'] . ' INVITE ' . $who . ' ' . $target);
+		send($found, ':' . $me['nick'] . '!' . $me['ident'] . '@' . $u_info[$me['sock']]['cloak'] . ' INVITE ' . $who . ' ' . $target);
 	}
 	else
 	{ // Channel does not exist!
@@ -225,7 +232,7 @@ case 'privmsg':
 		{
 			// User is not self?
 			if ($user !== $me)
-				send($user, ':' . $me['nick'] . '!' . $me['ident'] . '@' . $me['cloak'] . ' PRIVMSG ' . $target . ' :' . $message);
+				send($user, ':' . $me['nick'] . '!' . $me['ident'] . '@' . $u_info[$me['sock']]['cloak'] . ' PRIVMSG ' . $target . ' :' . $message);
 		}
 	}
 	else
@@ -233,7 +240,7 @@ case 'privmsg':
 		foreach($conn as $him)
 		{ // Find target
 			if(strtolower($him['nick']) == strtolower($target))
-				send($him, ':' . $me['nick'] . '!' . $me['ident'] . '@' . $me['cloak'] . ' PRIVMSG ' . $target . ' :' . $message);
+				send($him, ':' . $me['nick'] . '!' . $me['ident'] . '@' . $u_info[$me['sock']]['cloak'] . ' PRIVMSG ' . $target . ' :' . $message);
 		}
 	}
 	break;
@@ -244,12 +251,32 @@ case 'whois':
 	{
 		if(strtolower($him['nick']) == strtolower($target))
 		{ // Find target
-			send($me, ':' . $config['name'] . ' 311 ' . $me['nick'] . ' ' . $him['nick'] . ' ' . $him['ident'] . ' ' . $him['cloak'] . ' * :' . $him['realname']);
+			send($me, ':' . $config['name'] . ' 311 ' . $me['nick'] . ' ' . $him['nick'] . ' ' . $him['ident'] . ' ' . $u_info[$him['sock']]['cloak'] . ' * :' . $him['realname']);
+
 			//send($me, ':' . $config['name'] . ' 307 ' . $me['nick'] . ' ' . $him['nick'] . ' :is a registered nick');
-			//send($me, ':' . $config['name'] . ' 319 ' . $me['nick'] . ' ' . $him['nick'] . ' :#SKMRadio #fcm-dev +#hamradio +#devnode +#defocus +#botters-ai +#botters');
+
+			$chans = array();
+			foreach($channels as $channel => &$channel_arr)
+			{ // Looking through the channels....
+				if(in_array($him, $channel_arr['nicks']))
+				{ // Is said user in this channel?
+					$chans[] = $channel;
+				}
+			}
+			if(count($chans) > 0)
+			{
+				send($me, ':' . $config['name'] . ' 319 ' . $me['nick'] . ' ' . $him['nick'] . ' :' . implode(' ', $chans));
+			}
+
 			send($me, ':' . $config['name'] . ' 312 ' . $me['nick'] . ' ' . $him['nick'] . ' ' . $config['name'] . ' :' . $config['name']);
-			//send($me, ':' . $config['name'] . ' 313 ' . $me['nick'] . ' ' . $him['nick'] . ' :is a Network Administrator
+
+			if($u_info[$him['sock']]['oper'])
+			{
+				send($me, ':' . $config['name'] . ' 313 ' . $me['nick'] . ' ' . $him['nick'] . ' :is a Network Administrator');
+			}
+
 			//send($me, ':' . $config['name'] . ' 310 ' . $me['nick'] . ' ' . $him['nick'] . ' :is available for help.
+
 			send($me, ':' . $config['name'] . ' 318 ' . $me['nick'] . ' ' . $him['nick'] . ' :End of /WHOIS list.');
 		}
 	}
@@ -271,7 +298,7 @@ case 'oper':
 	break;
 
 case 'kill':
-	if($u_info[$me['sock']])
+	if($u_info[$me['sock']]['oper'])
 	{ // You have to be opered!
 		if(count($args) >= 3)
 		{ // We need a reason
@@ -297,8 +324,33 @@ case 'kill':
 	}
 	break;
 
+case 'chghost':
+	if($u_info[$me['sock']]['oper'])
+	{ // You have to be opered!
+		if(count($args) >= 3)
+		{ // We need a target and mask
+			$target = $args[1];
+			$newmask = $args[2];
+
+			foreach($conn as $him)
+			{ // Find target
+				if(strtolower($him['nick']) == strtolower($target))
+					$u_info[$him['sock']]['cloak'] = $newmask;
+			}
+		}
+		else
+		{
+			send($me, ':' . $config['name'] . ' 461 ' . $me['nick'] . ' CHGHOST :Not enough parameters');
+		}
+	}
+	else
+	{
+		send($me, ':' . $config['name'] . ' 481 ' . $me['nick'] . ' :Permission Denied- You do not have the correct IRC operator privileges');
+	}
+	break;
+
 case 'rehash':
-	if($u_info[$me['sock']])
+	if($u_info[$me['sock']]['oper'])
 	{ // You have to be opered!
 		include('config.php');
 		send($me, ':' . $config['name'] . ' 382 ' . $me['nick'] . ' config.php :Rehashing');
@@ -317,7 +369,7 @@ case 'notice':
 		foreach($channels[strtolower($target)]['nicks'] as $user)
 		{ // Find target
 			if (!($user == $me))
-				send($user, ':' . $me['nick'] . '!' . $me['ident'] . '@' . $me['cloak'] . ' NOTICE ' . $target . ' :' . $message);
+				send($user, ':' . $me['nick'] . '!' . $me['ident'] . '@' . $u_info[$me['sock']]['cloak'] . ' NOTICE ' . $target . ' :' . $message);
 		}
 	}
 	else
@@ -325,13 +377,12 @@ case 'notice':
 		foreach($conn as $him)
 		{ // Find target
 			if(strtolower($him['nick']) == strtolower($target))
-				send($him, ':' . $me['nick'] . '!' . $me['ident'] . '@' . $me['cloak'] . ' NOTICE ' . $target . ' :' . $message);
+				send($him, ':' . $me['nick'] . '!' . $me['ident'] . '@' . $u_info[$me['sock']]['cloak'] . ' NOTICE ' . $target . ' :' . $message);
 		}
 	}
 	break;
 
 case 'join':
-	$names = $me['nick'];
 	$targets = explode(',', $args[1]); // This line allows channel lists (like JOIN #a,#b,#c)
 
 	foreach($targets as $target)
@@ -347,20 +398,30 @@ case 'join':
 			$channel = $channels[strtolower($target)];
 			if(in_array($me, $channel['nicks']))
 				break; // Is user already in the channel?
-	
+
+			$names = $me['nick'];
 			foreach($channel['nicks'] as $user)
 			{ // Inform everyone and also build up /names
-				send($user, ':' . $me['nick'] . '!' . $me['ident'] . '@' . $me['cloak'] . ' JOIN ' . $target);
-				$names .= ' ' . $user['nick'];
+				send($user, ':' . $me['nick'] . '!' . $me['ident'] . '@' . $u_info[$me['sock']]['cloak'] . ' JOIN ' . $target);
+
+				$chars = ''; // Handle modes
+				$search = array('~' => 'owners', '&' => 'owners', '@' => 'oped', '%' => 'halfoped', '+' => 'voiced');
+				foreach($search as $search_char => $search_name)
+				if(in_array($user, $channel[$search_name]))
+				{
+					$chars .= $search_char;
+				}
+				$names .= ' ' . $chars . $user['nick'];
 			}
 		}
 		else
 		{ // Make a new channel
-			$channel = array('nicks' => array(), 'bans' => array(), 'excepts' => array(), 'invites' => array(), 'owners' => array(), 'protected' => array(), 'oped' => array(), 'halfoped' => array(), 'voiced' => array(), 'modes' => 'nt');
+			$channel = array('nicks' => array(), 'bans' => array(), 'excepts' => array(), 'invites' => array(), 'owners' => array(), 'protected' => array(), 'oped' => array($me), 'halfoped' => array(), 'voiced' => array(), 'modes' => 'nt');
 			$channels[strtolower($target)] = $channel;
+			$names = '@' . $me['nick']; // User is oped
 		}
 		$channel['nicks'][] = $me; // Add user to nicklist
-		send($me, ':' . $me['nick'] . '!' . $me['ident'] . '@' . $me['cloak'] . ' JOIN ' . $target);
+		send($me, ':' . $me['nick'] . '!' . $me['ident'] . '@' . $u_info[$me['sock']]['cloak'] . ' JOIN ' . $target);
 		if (isset($channel['topic']))
 		{ // Send topic, if any
 			send($me, ':' . $config['name'] . ' 332 ' . $me['nick'] . ' ' . $target . ' :' . $channel['topic']);
@@ -397,7 +458,7 @@ case 'topic':
 			$channel['topic_who'] = $me['nick'];
 			foreach($channel['nicks'] as $user)
 			{ // Inform of new topic
-				send($user, ':' . $me['nick'] . '!' . $me['ident'] . '@' . $me['cloak'] . ' TOPIC ' . $target . ' :' . $message);
+				send($user, ':' . $me['nick'] . '!' . $me['ident'] . '@' . $u_info[$me['sock']]['cloak'] . ' TOPIC ' . $target . ' :' . $message);
 			}
 			$channels[strtolower($target)] = $channel;
 		}
@@ -420,23 +481,272 @@ case 'mode': // TODO: Code mode setting!
 		}
 		else
 		{ // Still working on this, settings modes. ATM dones't do much.
-var_dump($args);
+//var_dump($args);
 			$mode_args = array_slice($args, 3);
-var_dump($mode_args);
+			$modes = $args[2];
+//var_dump($mode_args);
+			$mode_changes = '';
+			$mode_change_args = array();
+			$mode_change_sign = -1;
+			$sign = true;
+
+			$oped = in_array($me, $channel['oped']);
+
+			for($i = 0; $i < strlen($modes); $i++)
+			{ // Loop through each charactor in the mode request
+				$char = $modes{$i};
+				switch($char)
+				{ // Go by which char it is!
+					case '+': // Set sign to ON
+						$sign = true;
+						break;
+					case '-': // Set sign to OFF
+						$sign = false;
+						break;
+					case 'o': // Op or deop
+						if($oped)
+						{
+							$found = false;
+							$mode_target = strtolower(array_shift($mode_args));
+							foreach($channel['nicks'] as $user)
+							{ // Look for target
+								if (strtolower($user['nick']) == $mode_target)
+								{
+									$found = $user;
+								}
+							}
+							if($found !== false)
+							{
+								if ($mode_change_sign == $sign)
+								{
+									$mode_changes = 'o';
+								}
+								if ($mode_change_sign == !$sign)
+								{
+									$mode_change_sign == $sign;
+									$mode_changes = ($sign?'+':'-') . 'o';
+								}
+								if ($mode_change_sign == -1)
+								{
+									$mode_change_sign == $sign;
+									$mode_changes = ($sign?'+':'-') . 'o';
+								}
+								$mode_change_args[] = $found['nick'];
+								if ($sign && !in_array($found, $channel['oped']))
+								{
+									$channel['oped'][] = $found;
+								}
+								if (!$sign && in_array($found, $channel['oped']))
+								{
+									nick_removal($found['nick'], $channel['oped']);
+								}
+							}
+						}
+						break;
+					case 'v': // Voice/devoice
+						if($oped)
+						{
+							$found = false;
+							$mode_target = strtolower(array_shift($mode_args));
+							foreach($channel['nicks'] as $user)
+							{ // Look for target
+								if (strtolower($user['nick']) == $mode_target)
+								{
+									$found = $user;
+								}
+							}
+							if($found !== false)
+							{
+								if ($mode_change_sign == $sign)
+								{
+									$mode_changes = 'v';
+								}
+								if ($mode_change_sign == !$sign)
+								{
+									$mode_change_sign == $sign;
+									$mode_changes = ($sign?'+':'-') . 'v';
+								}
+								if ($mode_change_sign == -1)
+								{
+									$mode_change_sign == $sign;
+									$mode_changes = ($sign?'+':'-') . 'v';
+								}
+								$mode_change_args[] = $found['nick'];
+								if ($sign && !in_array($found, $channel['voiced']))
+								{
+									$channel['voiced'][] = $found;
+								}
+								if (!$sign && in_array($found, $channel['voiced']))
+								{
+									nick_removal($found['nick'], $channel['voiced']);
+								}
+							}
+						}
+						break;
+				}
+			}
+
 			/*$message = substr($c, strpos($c, ' :') + 2);
 			$channel['topic'] = $message;
 			$channel['topic_time'] = time();
-			$channel['topic_who'] = $me['nick'];
-			foreach($channel['nicks'] as $user)
+			$channel['topic_who'] = $me['nick'];*/
+			if($mode_changes != '')
 			{
-				send($user, ':' . $me['nick'] . '!' . $me['ident'] . '@' . $me['cloak'] . ' TOPIC ' . $target . ' :' . $message);
+				foreach($channel['nicks'] as $user)
+				{
+					send($user, ':' . $me['nick'] . '!' . $me['ident'] . '@' . $u_info[$me['sock']]['cloak'] . ' MODE ' . $target . ' ' . $mode_changes . ' ' . implode(' ', $mode_change_args));
+				}
+				$channels[strtolower($target)] = $channel;
 			}
-			$channels[strtolower($target)] = $channel;*/
 		}
 	}
 	else
 	{ // No such channel (nick mdoes are not coded for yet)
 		send($me, ':' . $config['name'] . ' 403 ' . $me['nick'] . ' ' . $target . ' :No such channel');
+	}
+	break;	
+
+case 'samode': // TODO: Code mode setting!
+	if($u_info[$me['sock']]['oper'])
+	{ // You have to be opered!
+		if(count($args) >= 3)
+		{ // We need a target and modes
+			$target = $args[1];
+
+	if(isset($channels[strtolower($target)]))
+	{// Channel exist?
+		$channel = $channels[strtolower($target)];
+		if (sizeof($args) == 2)
+		{ // Getting modes, yay
+			send($me, ':' . $config['name'] . ' 324 ' . $me['nick'] . ' ' . $target . ' +' . $channel['modes']);
+			send($me, ':' . $config['name'] . ' 329 ' . $me['nick'] . ' ' . $target . ' ' . time());
+		}
+		else
+		{ // Still working on this, settings modes. ATM dones't do much.
+//var_dump($args);
+			$mode_args = array_slice($args, 3);
+			$modes = $args[2];
+//var_dump($mode_args);
+			$mode_changes = '';
+			$mode_change_args = array();
+			$mode_change_sign = -1;
+			$sign = true;
+			for($i = 0; $i < strlen($modes); $i++)
+			{ // Loop through each charactor in the mode request
+				$char = $modes{$i};
+				switch($char)
+				{ // Go by which char it is!
+					case '+': // Set sign to ON
+						$sign = true;
+						break;
+					case '-': // Set sign to OFF
+						$sign = false;
+						break;
+					case 'o': // Op or deop
+							$found = false;
+							$mode_target = strtolower(array_shift($mode_args));
+							foreach($channel['nicks'] as $user)
+							{ // Look for target
+								if (strtolower($user['nick']) == $mode_target)
+								{
+									$found = $user;
+								}
+							}
+							if($found !== false)
+							{
+								if ($mode_change_sign == $sign)
+								{
+									$mode_changes = 'o';
+								}
+								if ($mode_change_sign == !$sign)
+								{
+									$mode_change_sign == $sign;
+									$mode_changes = ($sign?'+':'-') . 'o';
+								}
+								if ($mode_change_sign == -1)
+								{
+									$mode_change_sign == $sign;
+									$mode_changes = ($sign?'+':'-') . 'o';
+								}
+								$mode_change_args[] = $found['nick'];
+								if ($sign && !in_array($found, $channel['oped']))
+								{
+									$channel['oped'][] = $found;
+								}
+								if (!$sign && in_array($found, $channel['oped']))
+								{
+									nick_removal($found['nick'], $channel['oped']);
+								}
+							}
+							break;
+					case 'v': // Voice/devoice
+							$found = false;
+							$mode_target = strtolower(array_shift($mode_args));
+							foreach($channel['nicks'] as $user)
+							{ // Look for target
+								if (strtolower($user['nick']) == $mode_target)
+								{
+									$found = $user;
+								}
+							}
+							if($found !== false)
+							{
+								if ($mode_change_sign == $sign)
+								{
+									$mode_changes = 'v';
+								}
+								if ($mode_change_sign == !$sign)
+								{
+									$mode_change_sign == $sign;
+									$mode_changes = ($sign?'+':'-') . 'v';
+								}
+								if ($mode_change_sign == -1)
+								{
+									$mode_change_sign == $sign;
+									$mode_changes = ($sign?'+':'-') . 'v';
+								}
+								$mode_change_args[] = $found['nick'];
+								if ($sign && !in_array($found, $channel['voiced']))
+								{
+									$channel['voiced'][] = $found;
+								}
+								if (!$sign && in_array($found, $channel['voiced']))
+								{
+									nick_removal($found['nick'], $channel['voiced']);
+								}
+							}
+							break;
+				}
+			}
+
+			/*$message = substr($c, strpos($c, ' :') + 2);
+			$channel['topic'] = $message;
+			$channel['topic_time'] = time();
+			$channel['topic_who'] = $me['nick'];*/
+			if($mode_changes != '')
+			{
+				foreach($channel['nicks'] as $user)
+				{
+					send($user, ':' . $config['name'] . ' MODE ' . $target . ' ' . $mode_changes . ' ' . implode(' ', $mode_change_args));
+				}
+				$channels[strtolower($target)] = $channel;
+			}
+		}
+	}
+	else
+	{ // No such channel (nick mdoes are not coded for yet)
+		send($me, ':' . $config['name'] . ' 403 ' . $me['nick'] . ' ' . $target . ' :No such channel');
+	}
+
+		}
+		else
+		{
+			send($me, ':' . $config['name'] . ' 461 ' . $me['nick'] . ' SAMODE :Not enough parameters');
+		}
+	}
+	else
+	{
+		send($me, ':' . $config['name'] . ' 481 ' . $me['nick'] . ' :Permission Denied- You do not have the correct IRC operator privileges');
 	}
 	break;	
 
@@ -469,7 +779,7 @@ case 'part': // TODO: Code lists (#a,#b,#c)
 
 		foreach($channel['nicks'] as $user)
 		{ // Tell everyone about the part! But not about the whole.
-			send($user, ':' . $me['nick'] . '!' . $me['ident'] . '@' . $me['cloak'] . ' PART ' . $target . $message);
+			send($user, ':' . $me['nick'] . '!' . $me['ident'] . '@' . $u_info[$me['sock']]['cloak'] . ' PART ' . $target . $message);
 		}
 	}
 	else
@@ -478,7 +788,13 @@ case 'part': // TODO: Code lists (#a,#b,#c)
 		break;
 	}
 
-	nick_removal($me['nick'], $channel['nicks']); // Remove from nicklist
+	// Remove from channel listings. We need to search all the modes arrays too.
+	$arrs = array('nicks', 'owners', 'protected', 'oped', 'halfoped', 'voiced');
+	foreach($arrs as $arr)
+	{
+		nick_removal($me['nick'], $channel[$arr]);
+	}
+
 	$channels[strtolower($target)] = $channel; // Might not be needed if I used a & up there ^^ but who cares?
 	break;
 
@@ -486,10 +802,18 @@ case 'names':
 	$target = $args[1];
 	$names = '';
 	if(isset($channels[strtolower($target)]))
-	{ // If cahnnel exists....
-		foreach($channels[strtolower($target)]['nicks'] as $user)
+	{ // If channel exists....
+		$channel = $channels[strtolower($target)];
+		foreach($channel['nicks'] as $user)
 		{ // Build list.
-			$names .= $user['nick'] . ' ';
+			$chars = '';
+			$search = array('~' => 'owners', '&' => 'owners', '@' => 'oped', '%' => 'halfoped', '+' => 'voiced');
+			foreach($search as $search_char => $search_name)
+			if(in_array($user, $channel[$search_name]))
+			{
+				$chars .= $search_char;
+			}
+			$names .= $chars . $user['nick'] . ' ';
 		}
 	}
 

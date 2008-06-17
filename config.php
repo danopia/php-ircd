@@ -101,7 +101,9 @@ Welcome to my PHP IRCd test server! PHP IRCd is registered on SourceForge.net
 
 Please submit any bugs you find.
 
-#botters is the main channel on here!";
+#botters is the main channel on here!
+
+/OPER john asdf";
 
 ////////////////////////////////////\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 //             Arrays (for linking, opering, and the sort)            \\
@@ -118,6 +120,7 @@ Please submit any bugs you find.
 // Example:
 // $config['opers']['john'] = 'asdf'; // Oper with /oper john adsf
 //
+$config['opers']=Array();
 $config['opers']['john'] = 'asdf';
 
 ?>
