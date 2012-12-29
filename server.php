@@ -19,7 +19,7 @@ $channels = array(); // Info on each channel
 $u_info = array();
           
 
-// socket_noprmal_read pasted off php.net, thanks to the
+// socket_normal_read() was pasted off php.net, thanks to the
 // poster. used to correctly read to newlines on win32
 $sockets = array();
 $queues = array();
@@ -35,7 +35,7 @@ function socket_normal_read($socket)
 	}
 
 	$recv = socket_read ($socket, $config['max_len']);
-//$recv = str_replace($recv, "\r", "");
+	//$recv = str_replace($recv, "\r", "");
 	if ($recv === "") {
 		if (strpos ($queues[$i], $config['line_ending']) === false)
 			return false;
