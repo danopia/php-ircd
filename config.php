@@ -68,7 +68,7 @@ $config['max_users'] = 25;
 // Range: Any TCP/IP port (1-51something)
 // Default: 6667 (Standard)
 //
-$config['port'] = 6661;
+$config['port'] = 6667;
 
 //
 // (test) Comment out the below line so your server will run.
