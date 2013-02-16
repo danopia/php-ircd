@@ -94,6 +94,7 @@ case 'nick':
 	{
 		$newme = $me; // Make a new user instance that will be inserted into channel nick lists
 		$newme['nick'] = $newnick;
+		send($newme, ':' . $me['nick'] . '!' . $me['ident'] . '@' . $u_info[$me['sock']]['cloak'] . ' NICK ' . $newnick); //send to the command issuer
 		$sentto = array(); // Who already got the NICK?
 		foreach($channels as &$channel)
 		{ // Looking through the channels....
@@ -103,7 +104,7 @@ case 'nick':
 				{ // Loop through the nicks in said channel
 					if(!in_array($user, $sentto))
 					{ // User did not get the NICK yet
-						send($user, ':' . $me['nick'] . '!' . $me['ident'] . '@' . $u_info[$me['sock']]['cloak'] . ' NICK ' . $newnick);
+						if($user['nick'] != $me['nick']) send($user, ':' . $me['nick'] . '!' . $me['ident'] . '@' . $u_info[$me['sock']]['cloak'] . ' NICK ' . $newnick); //Don't send to the command issuer now
 						$sentto[] = $user;
 					}
 				}
