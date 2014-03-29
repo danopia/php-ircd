@@ -127,20 +127,17 @@ error_reporting(E_ALL);
 
 set_time_limit(0); // Run forever
 
-$version = 0.0; // Server version
-$ver_str = (string) $version;
-if (!stristr($ver_str, '.')) {
-    $version = number_format($version, 1);
-    $ver_str = (string) $version;
-}
-
-
 // Create listen socket and bind
 $sock = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
-socket_bind($sock, $config['bind_ip'], $config['port']);
-if (socket_last_error() != 0){
-    echo socket_last_error() . ': ' . socket_strerror(socket_last_error());
+$sock_bind = socket_bind($sock, $config['bind_ip'], $config['port']);
+
+if (false === $sock_bind) {
+    $error_code = socket_last_error();
+    $error_msg = socket_strerror($errorcode);
+    
+    die("Could not create socket $error_code $error_msg");
 }
+
 socket_listen($sock, $config['max_users']);
 
 // Nonblocking socket
