@@ -11,16 +11,14 @@
 // feel free to edit and distribute as long as you leave all original
 // credit for this
 //
-
 // config.php - June 15, 2008 by danopia
 // Read over the whole file before you run the server!
 
-$config=Array(); // Array to store configoration values
 
+$config = array(); // Array to store configoration values
 ////////////////////////////////////\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 //                            Simple stuff                            \\
 ////////////////////////////////////\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-
 //
 // (string) Name of the server. Must be a valid domain name, doens't
 // have to exist though. You might want to have it acutally resolve to
@@ -68,18 +66,16 @@ $config['max_users'] = 25;
 // Range: Any TCP/IP port (1-51something)
 // Default: 6667 (Standard)
 //
-$config['port'] = 6661;
+$config['port'] = 6667;
 
-//
-// (test) Comment out the below line so your server will run.
-//
-die('You haven\'t configured your server properly!');
 
+
+$config['bind_ip'] = '0.0.0.0';
 //
 // (string) Line ending to be used in sockets. I use \n because it
 // seems to work the best.
 //
-$config['line_ending'] = "\n";
+$config['line_ending'] = "\r\n";
 
 //
 // (string) Line ending to be used in muliline config values. I use a
@@ -108,7 +104,6 @@ Please submit any bugs you find.
 ////////////////////////////////////\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 //             Arrays (for linking, opering, and the sort)            \\
 ////////////////////////////////////\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-
 //
 // ((string,string)[]) O:Lines
 // O:Lines define opers. You oper with /oper <username> <password>
@@ -120,7 +115,6 @@ Please submit any bugs you find.
 // Example:
 // $config['opers']['john'] = 'asdf'; // Oper with /oper john adsf
 //
-$config['opers']=Array();
+$config['opers'] = array();
 $config['opers']['john'] = 'asdf';
-
 ?>

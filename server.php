@@ -39,16 +39,18 @@ function socket_normal_read($socket) {
     $recv = socket_read($socket, $config['max_len']);
     //$recv = str_replace($recv, "\r", "");
     if ($recv === "") {
-        if (strpos($queues[$i], $config['line_ending']) === false)
+        if (strpos($queues[$i], $config['line_ending']) === false){
             return false;
+        }    
     }
     else if ($recv !== false) {
         $queues[$i] .= $recv;
     }
 
     $pos = strpos($queues[$i], $config['line_ending']);
-    if ($pos === false)
+    if ($pos === false){
         return "";
+    }    
     $ret = substr($queues[$i], 0, $pos);
     $queues[$i] = substr($queues[$i], $pos + 1);
 
@@ -117,8 +119,6 @@ function kill($who, $reason) {
 function send($who, $text) {
     socket_write($who['sock'], $text . "\r\n");
     echo $who['nick'] . ' >>> ' . $text . "\r\n";
-    // if (socket_last_error($who['sock']) != 0)
-    // echo socket_last_error($who['sock']) . ': ' . socket_strerror(socket_last_error($who['sock'])) . "\r\n";
 }
 
 // Level of error reporting in console
@@ -137,7 +137,7 @@ if (!stristr($ver_str, '.')) {
 
 // Create listen socket and bind
 $sock = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
-socket_bind($sock, '0.0.0.0', $config['port']);
+socket_bind($sock, $config['bind_ip'], $config['port']);
 if (socket_last_error() != 0){
     echo socket_last_error() . ': ' . socket_strerror(socket_last_error());
 }
