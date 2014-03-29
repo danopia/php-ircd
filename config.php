@@ -68,9 +68,17 @@ $config['max_users'] = 25;
 //
 $config['port'] = 6667;
 
+//
+// Server version
+//
+$config['version'] = 0.1;
 
-
+//
+// (string)
+// IP to bind IRC server to
+//
 $config['bind_ip'] = '0.0.0.0';
+
 //
 // (string) Line ending to be used in sockets. I use \n because it
 // seems to work the best.
