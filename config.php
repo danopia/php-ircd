@@ -83,7 +83,7 @@ $config['bind_ip'] = '0.0.0.0';
 // (string) Line ending to be used in sockets. I use \n because it
 // seems to work the best.
 //
-$config['line_ending'] = "\r\n";
+$config['line_ending'] = "\n";
 
 //
 // (string) Line ending to be used in muliline config values. I use a
