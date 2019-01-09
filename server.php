@@ -76,7 +76,7 @@ function array_removal($val, &$arr) {
     return true;
 }
 
-// Removes a client with a certian nick from an array of clients, using array_removal
+// Removes a client with a certain nick from an array of clients, using array_removal
 function nick_removal($nick, &$arr) {
     foreach ($arr as $id => $him) {
         if (strtolower($him['nick']) == strtolower($nick))
