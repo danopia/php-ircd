@@ -415,7 +415,7 @@ foreach ($conn as &$me) { // Loop through connections
                         $oped = in_array($me, $channel['oped']);
 
                         for ($i = 0; $i < strlen($modes); $i++) { // Loop through each charactor in the mode request
-                            $char = $modes{$i};
+                            $char = $modes[$i];
                             switch ($char) { // Go by which char it is!
                                 case '+': // Set sign to ON
                                     $sign = true;
@@ -524,7 +524,7 @@ foreach ($conn as &$me) { // Loop through connections
                                 $mode_change_sign = -1;
                                 $sign = true;
                                 for ($i = 0; $i < strlen($modes); $i++) { // Loop through each charactor in the mode request
-                                    $char = $modes{$i};
+                                    $char = $modes[$i];
                                     switch ($char) { // Go by which char it is!
                                         case '+': // Set sign to ON
                                             $sign = true;
