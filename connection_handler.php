@@ -60,7 +60,7 @@ foreach ($conn as &$me) { // Loop through connections
                 $newnick = $args[1];
                 $taken = false; // Is nick in use?
                 // Sometimes clients send :nick instead of nick
-                if (strpos($c, ' :') !== false)
+                if (str_contains($c, ' :'))
                     $newnick = substr($c, strpos($c, ' :') + 2);
 
                 if (!validate_nick($newnick)) { // Invalid nick
@@ -117,7 +117,7 @@ foreach ($conn as &$me) { // Loop through connections
                 $newrealname = $args[4];
 
                 // Check for :
-                if (strpos($c, ' :') !== false)
+                if (str_contains($c, ' :'))
                     $newrealname = substr($c, strpos($c, ' :') + 2);
 
                 if ($me['ident'] == null) { // You can only register once.
@@ -264,7 +264,7 @@ foreach ($conn as &$me) { // Loop through connections
                     if (count($args) >= 3) { // We need a reason
                         $target = $args[1];
                         $reason = $args[2];
-                        if (strpos($c, ' :') !== false)
+                        if (str_contains($c, ' :'))
                             $reason = substr($c, strpos($c, ' :') + 2);
 
                         foreach ($conn as $him) { // Find target
@@ -373,7 +373,7 @@ foreach ($conn as &$me) { // Loop through connections
                 $target = $args[1];
                 if (isset($channels[strtolower($target)])) { // Does the channel exist?
                     $channel = $channels[strtolower($target)];
-                    if (strpos($c, ' :') === false) { // Not setting topic.
+                    if (!str_contains($c, ' :')) { // Not setting topic.
                         if (isset($channel['topic'])) { // Send topic, damnit!
                             send($me, ':' . $config['name'] . ' 332 ' . $me['nick'] . ' ' . $target . ' :' . $channel['topic']);
                             send($me, ':' . $config['name'] . ' 333 ' . $me['nick'] . ' ' . $target . ' ' . $channel['topic_who'] . ' ' . $channel['topic_time']);
@@ -437,11 +437,9 @@ foreach ($conn as &$me) { // Loop through connections
                                                 $mode_changes = 'o';
                                             }
                                             if ($mode_change_sign == !$sign) {
-                                                $mode_change_sign == $sign;
                                                 $mode_changes = ($sign ? '+' : '-') . 'o';
                                             }
                                             if ($mode_change_sign == -1) {
-                                                $mode_change_sign == $sign;
                                                 $mode_changes = ($sign ? '+' : '-') . 'o';
                                             }
                                             $mode_change_args[] = $found['nick'];
@@ -468,11 +466,9 @@ foreach ($conn as &$me) { // Loop through connections
                                                 $mode_changes = 'v';
                                             }
                                             if ($mode_change_sign == !$sign) {
-                                                $mode_change_sign == $sign;
                                                 $mode_changes = ($sign ? '+' : '-') . 'v';
                                             }
                                             if ($mode_change_sign == -1) {
-                                                $mode_change_sign == $sign;
                                                 $mode_changes = ($sign ? '+' : '-') . 'v';
                                             }
                                             $mode_change_args[] = $found['nick'];
@@ -545,11 +541,9 @@ foreach ($conn as &$me) { // Loop through connections
                                                     $mode_changes = 'o';
                                                 }
                                                 if ($mode_change_sign == !$sign) {
-                                                    $mode_change_sign == $sign;
                                                     $mode_changes = ($sign ? '+' : '-') . 'o';
                                                 }
                                                 if ($mode_change_sign == -1) {
-                                                    $mode_change_sign == $sign;
                                                     $mode_changes = ($sign ? '+' : '-') . 'o';
                                                 }
                                                 $mode_change_args[] = $found['nick'];
@@ -574,11 +568,9 @@ foreach ($conn as &$me) { // Loop through connections
                                                     $mode_changes = 'v';
                                                 }
                                                 if ($mode_change_sign == !$sign) {
-                                                    $mode_change_sign == $sign;
                                                     $mode_changes = ($sign ? '+' : '-') . 'v';
                                                 }
                                                 if ($mode_change_sign == -1) {
-                                                    $mode_change_sign == $sign;
                                                     $mode_changes = ($sign ? '+' : '-') . 'v';
                                                 }
                                                 $mode_change_args[] = $found['nick'];
@@ -617,7 +609,7 @@ foreach ($conn as &$me) { // Loop through connections
 
             case 'quit': // Nice and simple due to the kill() function. FUNCTIONS FTW!
                 $message = 'Client exited';
-                if (strpos($c, ' :') !== false)
+                if (str_contains($c, ' :'))
                     $message = 'Quit: ' . substr($c, strpos($c, ' :') + 2);
                 kill($me, $message);
                 break;
@@ -629,7 +621,7 @@ foreach ($conn as &$me) { // Loop through connections
             case 'part': // TODO: Code lists (#a,#b,#c)
                 $target = $args[1];
                 $message = '';
-                if (strpos($c, ' :') !== false)
+                if (str_contains($c, ' :'))
                     $message = substr($c, strpos($c, ' :'));
 
                 // O RLY? (Does the channel even exist?)
@@ -678,7 +670,7 @@ foreach ($conn as &$me) { // Loop through connections
                 break;
 
             case 'ping': // PONG DAMNIT!
-                if (strpos($args[1], ':') === false)
+                if (!str_contains($args[1], ':'))
                     $args[1] = ':' . $args[1];
 
                 send($me, ':' . $config['name'] . ' PONG ' . $config['name'] . ' ' . $args[1]);
@@ -690,7 +682,7 @@ foreach ($conn as &$me) { // Loop through connections
     // closed?
     $error = socket_last_error($me['sock']);
 //echo $error;
-    if (($error == 10053) || ($error == 10054) || ($error === false)) { // he failed.
+    if (($error == 10053) || ($error == 10054) || ($error == false)) { // he failed.
         echo $me['nick'] . " has died.\r\n";
         kill($me, 'Something failed...');
         array_removal($me, $conn);
@@ -698,4 +690,4 @@ foreach ($conn as &$me) { // Loop through connections
 } // foreach
 
 sleep(1); // 100% CPU ftl
-?>
+

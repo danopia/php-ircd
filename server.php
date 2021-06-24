@@ -26,20 +26,20 @@ $sockets = array();
 $queues = array();
 $sock_num = 0;
 
-function socket_normal_read($socket) {
+function socket_normal_read($socket): bool|string
+{
     global $config, $sockets, $queues, $sock_num;
-    for ($i = 0; isset($sockets[$i]) && $socket != $sockets[$i]; $i++)
-        ;
-
-    if (!isset($sockets[$i])) {
-        $sockets [$sock_num] = $socket;
-        $queues [$sock_num++] = "";
+    for ($i = 0; isset($sockets[$i]) && $socket != $sockets[$i]; $i++){
+        if (!isset($sockets[$i])) {
+            $sockets [$sock_num] = $socket;
+            $queues [$sock_num++] = "";
+        }
     }
 
     $recv = socket_read($socket, $config['max_len']);
     //$recv = str_replace($recv, "\r", "");
     if ($recv === "") {
-        if (strpos($queues[$i], $config['line_ending']) === false){
+        if (!str_contains($queues[$i], $config['line_ending'])){
             return false;
         }    
     }
@@ -58,17 +58,20 @@ function socket_normal_read($socket) {
 }
 
 // Validates a nick using regex (also controls max nick length)
-function validate_nick($nick) {
+function validate_nick($nick): bool|int
+{
     return preg_match('/^[a-zA-Z\[\]_|`^][a-zA-Z0-9\[\]_|`^]{0,29}$/', $nick);
 }
 
 // Validates a channel name using regex (also controls max channel length)
-function validate_chan($chan) {
-    return preg_match('/^#[a-zA-Z0-9`~!@#$%^&*\(\)\'";|}{\]\[.<>?]{0,29}$/', $chan);
+function validate_chan($chan): bool|int
+{
+    return preg_match('/^#[a-zA-Z0-9`~!@#$%^&*()\'";|}{\]\[.<>?]{0,29}$/', $chan);
 }
 
 // Removes a value from array, thanks to duck for providing this function
-function array_removal($val, &$arr) {
+function array_removal($val, &$arr): bool
+{
     $i = array_search($val, $arr);
     if ($i === false)
         return false;
@@ -77,11 +80,15 @@ function array_removal($val, &$arr) {
 }
 
 // Removes a client with a certain nick from an array of clients, using array_removal
-function nick_removal($nick, &$arr) {
+function nick_removal($nick, &$arr): bool | null
+{
     foreach ($arr as $id => $him) {
-        if (strtolower($him['nick']) == strtolower($nick))
+        if (strtolower($him['nick']) == strtolower($nick)) {
             return array_removal($him, $arr);
+        }
     }
+
+    return null;
 }
 
 // Lookup a DNS record, with a timeout.  Namely used for reverse DNS.
@@ -149,8 +156,8 @@ socket_set_nonblock($sock);
 echo "Running...";
 
 // Main loop
-while (is_resource($sock)){
+while (socket_listen($sock, 5) !== false){
     require 'connection_handler.php';
 
 }
-?>
+
