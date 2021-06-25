@@ -45,7 +45,7 @@ if ($x = @socket_accept($sock)) { // Is there a new socket?
         'ident' => null,
         'realname' => null,
         'host' => $host);
-    $u_info[$x] = array(// Add the info array
+    $u_info[spl_object_id($x)] = array(// Add the info array
         'oper' => false,
         'cloak' => $host);
     //}
@@ -358,7 +358,7 @@ foreach ($conn as &$me) { // Loop through connections
                         $names = '@' . $me['nick']; // User is oped
                     }
                     $channel['nicks'][] = $me; // Add user to nicklist
-                    send($me, ':' . $me['nick'] . '!' . $me['ident'] . '@' . $u_info[$me['sock']]['cloak'] . ' JOIN ' . $target);
+                    send($me, ':' . $me['nick'] . '!' . $me['ident'] . '@' . $u_info[spl_object_id($me['sock'])]['cloak'] . ' JOIN ' . $target);
                     if (isset($channel['topic'])) { // Send topic, if any
                         send($me, ':' . $config['name'] . ' 332 ' . $me['nick'] . ' ' . $target . ' :' . $channel['topic']);
                         send($me, ':' . $config['name'] . ' 333 ' . $me['nick'] . ' ' . $target . ' ' . $channel['topic_who'] . ' ' . $channel['topic_time']);
@@ -633,7 +633,7 @@ foreach ($conn as &$me) { // Loop through connections
                     }
 
                     foreach ($channel['nicks'] as $user) { // Tell everyone about the part! But not about the whole.
-                        send($user, ':' . $me['nick'] . '!' . $me['ident'] . '@' . $u_info[$me['sock']]['cloak'] . ' PART ' . $target . $message);
+                        send($user, ':' . $me['nick'] . '!' . $me['ident'] . '@' . $u_info[spl_object_id ($me['sock'])]['cloak'] . ' PART ' . $target . $message);
                     }
                 } else { // NO RLY
                     send($me, ':' . $config['name'] . ' 403 ' . $me['nick'] . ' ' . $target . ' :No such channel');
@@ -680,12 +680,17 @@ foreach ($conn as &$me) { // Loop through connections
         } // select
     } // while
     // closed?
-    $error = socket_last_error($me['sock']);
+    try {
+        $error = socket_last_error($me['sock']);
+    } catch (Error $e) {
+        $error = false;
+    }
+
 //echo $error;
     if (($error == 10053) || ($error == 10054) || ($error == false)) { // he failed.
         echo $me['nick'] . " has died.\r\n";
-        kill($me, 'Something failed...');
         array_removal($me, $conn);
+        kill($me, 'Something failed...');
     }
 } // foreach
 

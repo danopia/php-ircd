@@ -36,7 +36,12 @@ function socket_normal_read($socket): bool|string
         }
     }
 
-    $recv = socket_read($socket, $config['max_len']);
+    try {
+        $recv = socket_read($socket, $config['max_len']);
+    } catch (Error $e) {
+        return false;
+    }
+
     //$recv = str_replace($recv, "\r", "");
     if ($recv === "") {
         if (!str_contains($queues[$i], $config['line_ending'])){
@@ -117,15 +122,24 @@ function kill($who, $reason) {
         }
     }
     send($who, 'ERROR :Closing Link: ' . $who['nick'] . '[' . $who['host'] . '] (' . $reason . ')');
-    socket_close($who['sock']); // Close socket
-    array_removal($u_info[$who['sock']], $u_info); // Remove from the info array - part of the bugfix stated above
+    try {
+        socket_close($who['sock']); // Close socket
+    } catch (Error $e) {
+        echo "Socket already closed.";
+    }
+    array_removal($u_info[spl_object_id($who['sock'])], $u_info); // Remove from the info array - part of the bugfix stated above
     array_removal($who, $conn); // Remove socket from listing
 }
 
 // Send a packet to a user and log to console
 function send($who, $text) {
-    socket_write($who['sock'], $text . "\r\n");
-    echo $who['nick'] . ' >>> ' . $text . "\r\n";
+    try {
+        socket_write($who['sock'], $text . "\r\n");
+        echo $who['nick'] . ' >>> ' . $text . "\r\n";
+    } catch (Error $e) {
+        echo "sending message to client " . $who['nick'] . " failed";
+        echo $who['nick'] . ' >>> ' . $text . "\r\n";
+    }
 }
 
 // Level of error reporting in console
