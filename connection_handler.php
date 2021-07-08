@@ -89,7 +89,7 @@ foreach ($conn as &$me) { // Loop through connections
                         if (in_array($me, $channel['nicks'])) { // Is said user in this channel?
                             foreach ($channel['nicks'] as $user) { // Loop through the nicks in said channel
                                 if (!in_array($user, $sentto)) { // User did not get the NICK yet
-                                    send($user, ':' . $me['nick'] . '!' . $me['ident'] . '@' . $u_info[$me['sock']]['cloak'] . ' NICK ' . $newnick);
+                                    send($user, ':' . $me['nick'] . '!' . $me['ident'] . '@' . $u_info[spl_object_id($me['sock'])]['cloak'] . ' NICK ' . $newnick);
                                     $sentto[] = $user;
                                 }
                             }
@@ -190,7 +190,7 @@ foreach ($conn as &$me) { // Loop through connections
                         break;
                     }
                     // Invite to channel
-                    send($found, ':' . $me['nick'] . '!' . $me['ident'] . '@' . $u_info[$me['sock']]['cloak'] . ' INVITE ' . $who . ' ' . $target);
+                    send($found, ':' . $me['nick'] . '!' . $me['ident'] . '@' . $u_info[spl_object_id($me['sock'])]['cloak'] . ' INVITE ' . $who . ' ' . $target);
                 } else { // Channel does not exist!
                     send($me, ':' . $config['name'] . ' 403 ' . $me['nick'] . ' ' . $target . ' :No such nick/channel');
                     break;
@@ -204,13 +204,13 @@ foreach ($conn as &$me) { // Loop through connections
                     foreach ($channels[strtolower($target)]['nicks'] as $user) {
                         // User is not self?
                         if ($user !== $me)
-                            send($user, ':' . $me['nick'] . '!' . $me['ident'] . '@' . $u_info[$me['sock']]['cloak'] . ' PRIVMSG ' . $target . ' :' . $message);
+                            send($user, ':' . $me['nick'] . '!' . $me['ident'] . '@' . $u_info[spl_object_id($me['sock'])]['cloak'] . ' PRIVMSG ' . $target . ' :' . $message);
                     }
                 }
                 else {
                     foreach ($conn as $him) { // Find target
                         if (strtolower($him['nick']) == strtolower($target))
-                            send($him, ':' . $me['nick'] . '!' . $me['ident'] . '@' . $u_info[$me['sock']]['cloak'] . ' PRIVMSG ' . $target . ' :' . $message);
+                            send($him, ':' . $me['nick'] . '!' . $me['ident'] . '@' . $u_info[spl_object_id($me['sock'])]['cloak'] . ' PRIVMSG ' . $target . ' :' . $message);
                     }
                 }
                 break;
@@ -219,7 +219,7 @@ foreach ($conn as &$me) { // Loop through connections
                 $target = $args[1];
                 foreach ($conn as $him) {
                     if (strtolower($him['nick']) == strtolower($target)) { // Find target
-                        send($me, ':' . $config['name'] . ' 311 ' . $me['nick'] . ' ' . $him['nick'] . ' ' . $him['ident'] . ' ' . $u_info[$him['sock']]['cloak'] . ' * :' . $him['realname']);
+                        send($me, ':' . $config['name'] . ' 311 ' . $me['nick'] . ' ' . $him['nick'] . ' ' . $him['ident'] . ' ' . $u_info[spl_object_id($him['sock'])]['cloak'] . ' * :' . $him['realname']);
 
                         //send($me, ':' . $config['name'] . ' 307 ' . $me['nick'] . ' ' . $him['nick'] . ' :is a registered nick');
 
@@ -235,7 +235,7 @@ foreach ($conn as &$me) { // Loop through connections
 
                         send($me, ':' . $config['name'] . ' 312 ' . $me['nick'] . ' ' . $him['nick'] . ' ' . $config['name'] . ' :' . $config['name']);
 
-                        if ($u_info[$him['sock']]['oper']) {
+                        if ($u_info[spl_object_id($him['sock'])]['oper']) {
                             send($me, ':' . $config['name'] . ' 313 ' . $me['nick'] . ' ' . $him['nick'] . ' :is a Network Administrator');
                         }
 
@@ -251,7 +251,7 @@ foreach ($conn as &$me) { // Loop through connections
                     $user = $args[1];
                     $pass = $args[2];
                     if ((isset($config['opers'][$user])) && ($config['opers'][$user] == $pass)) {
-                        $u_info[$me['sock']]['oper'] = true;
+                        $u_info[spl_object_id($me['sock'])]['oper'] = true;
                         send($me, ':' . $config['name'] . ' 381 ' . $me['nick'] . ' :You have entered... the Twilight Zone!');
                         break;
                     }
@@ -260,7 +260,7 @@ foreach ($conn as &$me) { // Loop through connections
                 break;
 
             case 'kill':
-                if ($u_info[$me['sock']]['oper']) { // You have to be opered!
+                if ($u_info[spl_object_id($me['sock'])]['oper']) { // You have to be opered!
                     if (count($args) >= 3) { // We need a reason
                         $target = $args[1];
                         $reason = $args[2];
@@ -281,14 +281,14 @@ foreach ($conn as &$me) { // Loop through connections
                 break;
 
             case 'chghost':
-                if ($u_info[$me['sock']]['oper']) { // You have to be opered!
+                if ($u_info[spl_object_id($me['sock'])]['oper']) { // You have to be opered!
                     if (count($args) >= 3) { // We need a target and mask
                         $target = $args[1];
                         $newmask = $args[2];
 
                         foreach ($conn as $him) { // Find target
                             if (strtolower($him['nick']) == strtolower($target))
-                                $u_info[$him['sock']]['cloak'] = $newmask;
+                                $u_info[spl_object_id($him['sock'])]['cloak'] = $newmask;
                         }
                     }
                     else {
@@ -300,7 +300,7 @@ foreach ($conn as &$me) { // Loop through connections
                 break;
 
             case 'rehash':
-                if ($u_info[$me['sock']]['oper']) { // You have to be opered!
+                if ($u_info[spl_object_id($me['sock'])]['oper']) { // You have to be opered!
                     include('config.php');
                     send($me, ':' . $config['name'] . ' 382 ' . $me['nick'] . ' config.php :Rehashing');
                 } else {
@@ -314,13 +314,13 @@ foreach ($conn as &$me) { // Loop through connections
                 if (isset($channels[strtolower($target)])) {
                     foreach ($channels[strtolower($target)]['nicks'] as $user) { // Find target
                         if (!($user == $me))
-                            send($user, ':' . $me['nick'] . '!' . $me['ident'] . '@' . $u_info[$me['sock']]['cloak'] . ' NOTICE ' . $target . ' :' . $message);
+                            send($user, ':' . $me['nick'] . '!' . $me['ident'] . '@' . $u_info[spl_object_id($me['sock'])]['cloak'] . ' NOTICE ' . $target . ' :' . $message);
                     }
                 }
                 else {
                     foreach ($conn as $him) { // Find target
                         if (strtolower($him['nick']) == strtolower($target))
-                            send($him, ':' . $me['nick'] . '!' . $me['ident'] . '@' . $u_info[$me['sock']]['cloak'] . ' NOTICE ' . $target . ' :' . $message);
+                            send($him, ':' . $me['nick'] . '!' . $me['ident'] . '@' . $u_info[spl_object_id($me['sock'])]['cloak'] . ' NOTICE ' . $target . ' :' . $message);
                     }
                 }
                 break;
@@ -342,7 +342,7 @@ foreach ($conn as &$me) { // Loop through connections
 
                         $names = $me['nick'];
                         foreach ($channel['nicks'] as $user) { // Inform everyone and also build up /names
-                            send($user, ':' . $me['nick'] . '!' . $me['ident'] . '@' . $u_info[$me['sock']]['cloak'] . ' JOIN ' . $target);
+                            send($user, ':' . $me['nick'] . '!' . $me['ident'] . '@' . $u_info[spl_object_id($me['sock'])]['cloak'] . ' JOIN ' . $target);
 
                             $chars = ''; // Handle modes
                             $search = array('~' => 'owners', '&' => 'owners', '@' => 'oped', '%' => 'halfoped', '+' => 'voiced');
@@ -386,7 +386,7 @@ foreach ($conn as &$me) { // Loop through connections
                         $channel['topic_time'] = time();
                         $channel['topic_who'] = $me['nick'];
                         foreach ($channel['nicks'] as $user) { // Inform of new topic
-                            send($user, ':' . $me['nick'] . '!' . $me['ident'] . '@' . $u_info[$me['sock']]['cloak'] . ' TOPIC ' . $target . ' :' . $message);
+                            send($user, ':' . $me['nick'] . '!' . $me['ident'] . '@' . $u_info[spl_object_id($me['sock'])]['cloak'] . ' TOPIC ' . $target . ' :' . $message);
                         }
                         $channels[strtolower($target)] = $channel;
                     }
@@ -490,7 +490,7 @@ foreach ($conn as &$me) { // Loop through connections
                           $channel['topic_who'] = $me['nick']; */
                         if ($mode_changes != '') {
                             foreach ($channel['nicks'] as $user) {
-                                send($user, ':' . $me['nick'] . '!' . $me['ident'] . '@' . $u_info[$me['sock']]['cloak'] . ' MODE ' . $target . ' ' . $mode_changes . ' ' . implode(' ', $mode_change_args));
+                                send($user, ':' . $me['nick'] . '!' . $me['ident'] . '@' . $u_info[spl_object_id($me['sock'])]['cloak'] . ' MODE ' . $target . ' ' . $mode_changes . ' ' . implode(' ', $mode_change_args));
                             }
                             $channels[strtolower($target)] = $channel;
                         }
@@ -501,7 +501,7 @@ foreach ($conn as &$me) { // Loop through connections
                 break;
 
             case 'samode': // TODO: Code mode setting!
-                if ($u_info[$me['sock']]['oper']) { // You have to be opered!
+                if ($u_info[spl_object_id($me['sock'])]['oper']) { // You have to be opered!
                     if (count($args) >= 3) { // We need a target and modes
                         $target = $args[1];
 
