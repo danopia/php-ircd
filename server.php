@@ -114,7 +114,7 @@ function kill($who, $reason) {
         if (in_array($who, $channel['nicks'])) { // Was user x in this channel?
             foreach ($channel['nicks'] as $user) { // Loop through channel nick list
                 if (!in_array($user, $sentto)) { // Make sure user didn't get QUIT yet
-                    send($user, ':' . $who['nick'] . '!' . $who['ident'] . '@' . $u_info[$who['sock']]['cloak'] . ' QUIT :' . $reason);
+                    send($user, ':' . $who['nick'] . '!' . $who['ident'] . '@' . $u_info[spl_object_id($who['sock'])]['cloak'] . ' QUIT :' . $reason);
                     $sentto[] = $user;
                 }
             }
