@@ -101,7 +101,7 @@ $config['line_ending_conf'] = "
 $config['motd'] = "THIS IS THE MESSAGE OF THE DAY!
 
 Welcome to my PHP IRCd test server! PHP IRCd is registered on SourceForge.net
-<http://sf.net/projects/php-ircd>
+<https://sf.net/projects/php-ircd>
 
 Please submit any bugs you find.
 
@@ -125,4 +125,3 @@ Please submit any bugs you find.
 //
 $config['opers'] = array();
 $config['opers']['john'] = 'asdf';
-?>
